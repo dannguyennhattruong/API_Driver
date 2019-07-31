@@ -1,0 +1,16 @@
+/api/drivers/history
+
+return datas : {
+	> "drivers"
+	> "passengers" by passengerId in Driver model
+	> "trip" by tripId in Driver model
+}
+
+/api/drivers/autoAccept
+
+//return datas : {
+	> "drivers"
+	> "trip" : {
+		> "passengers" by passengerId in Trip model
+}
+}
