@@ -1,5 +1,8 @@
 const Driver = require("../models/Driver.model.js");
 const Trip = require("../models/Trip.model");
+
+const jwt = require('jsonwebtoken');
+const secret = 'dannguyennhattruong2019'
 // const jwt = require("jsonwebtoken");
 //-----------------------------------------------------------------------
 
@@ -54,11 +57,9 @@ exports.UpdateDriver = (req, res) => {
 
   Driver.findByIdAndUpdate(
     req.params.id,
-    {
-      Fullname: req.body.Fullname || "NoName",
-      Age: req.body.Age,
-      School: req.body.School
-    },
+    
+      req.body
+    ,
     { new: true },
     (err, docc) => {
       if (!err) res.json(docc);
@@ -113,6 +114,7 @@ exports.getDriverLogin = async (req, res) => {
   //Login a registered user
   try {
     const { email, password } = req.body;
+    console.log(req.body);
 
     const driver = await Driver.findByCredentials(email, password);
     if (!driver) {
@@ -122,6 +124,7 @@ exports.getDriverLogin = async (req, res) => {
     }
     const token = await driver.generateAuthToken();
     res.send({ driver, token });
+    console.log(driver);
   } catch (error) {
     res.status(400).send(error);
   }
@@ -144,3 +147,50 @@ exports.getHistoryTrip = (req, res) => {
     else res.send(err);
   });
 };
+
+exports.getDriverLogined = (req, res) => {
+  Driver.find({}, (err, doc) => {
+    if (!err) {
+      let driver = doc;
+      let newArr = [];
+      for (let i in driver) {
+        console.log(driver[i].tokens[0] === undefined);
+        if (driver[i].tokens[0] !== undefined) {
+          newArr.push(driver[i]);
+        }
+      }
+      // console.log(newArr);
+      res.send(JSON.stringify(newArr));
+    } else res.send(err);
+  });
+  // const keys = Object.keys(driver)
+};
+
+exports.forgetPassword = (req, res) => {
+  const payload = { id: req.params.id };
+  const token = jwt.sign(payload, secret);
+  // const decode = jwt.decode(token, secret)
+  // res.send('<a href="/api/drivers/account/resetpassword/' + payload.id + '/' + token + '">Reset password</a>');
+  res.send({ payload, token })
+  console.log({ payload, token })
+  // console.log(decode)
+}
+
+exports.resetPassword = (req, res) => {
+  const id = req.params.id;
+  Driver.findByIdAndUpdate(
+    id,
+    {
+      School:req.body.password
+    },
+    { new: true },
+    (err, docc) => {
+      if (!err) res.json(docc);
+      else res.send(err);
+    }
+  );
+  Driver.findById(id,(err,doc) => {
+    if(!err) res.send(doc)
+    else res.send(err)
+  })
+}

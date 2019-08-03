@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
-// Use of Date.now() function 
-var d = Date(Date.now()); 
-  
-// Converting the number of millisecond in date string 
-a = d.toString()
+// Use of Date.now() function
+var d = Date(Date.now());
+
+// Converting the number of millisecond in date string
+a = d.toString();
 
 const TripSchema = new Schema({
   PassengerId: {
@@ -33,13 +33,12 @@ const TripSchema = new Schema({
     required: true,
     default: 5000
   },
-  TimeStart : {
-      type:Date,
-      default :Date.now
+  TimeStart: {
+    type: Date,
+    default: Date.now
   },
-  TimeEnd : {
-      type : Date
-
+  TimeEnd: {
+    type: Date
   }
 });
 

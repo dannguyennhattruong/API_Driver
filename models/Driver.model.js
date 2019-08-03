@@ -12,7 +12,7 @@ const driverSchema = new Schema({
   Fullname: String,
   Age: Number,
   School: String,
-  TripId : String,
+  TripId: String,
   email: {
     type: String,
     required: true,
@@ -55,8 +55,8 @@ driverSchema.methods.generateAuthToken = async function() {
   const driver = this;
   const token = jwt.sign({ _id: driver._id }, JWT_KEY);
   driver.tokens = driver.tokens.concat({ token });
-  // await driver.save()
-  // return token
+  await driver.save();
+  return token;
 };
 //--------------------------------------------------------------------------------------
 
