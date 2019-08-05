@@ -6,6 +6,7 @@ module.exports = app => {
   const Driver = require('../models/Driver.model')
   const trip = require("../controlers/Trip.controller");
   const jwt = require('jsonwebtoken')
+
   //----------------------------------------------------------------------------
 
   // Create a new Driver
@@ -51,115 +52,21 @@ module.exports = app => {
   //----------------------------------------------------------------------------
 
   // Log user out of the application
-  app.post("/api/drivers/logout", auth, async (req, res) => {
-    try {
-      req.driver.tokens = req.driver.tokens.filter(token => {
-        return token.token != req.token;
-      });
-      await req.driver.save();
-      res.send(req.driver);
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  });
+  app.post("/api/drivers/logout", auth, driver.driverLogout);
   //----------------------------------------------------------------------------
 
   // Log user out of all devices
-  app.post("/api/drivers/logoutall", auth, async (req, res) => {
-    try {
-      req.driver.tokens.splice(0, req.driver.tokens.length);
-      await req.driver.save();
-      res.send(req.driver);
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  });
+  app.post("/api/drivers/logoutall", auth, driver.logoutAllDrivers);
 
   app.get("/api/drivers/auth/getAllDriverLogin", driver.getDriverLogined);
 
-  app.get('/forgotpassword', function (req, res) {
-    res.send('<form action="/passwordreset" method="POST">' +
-      '<input type="email" name="email" value="" placeholder="Enter your email address..." />' +
-      '<input type="submit" value="Reset Password" />' +
-      '</form>');
-  });
+  app.get('/forgotpassword', driver.forgotPassword);
 
-  app.post('/resetpassword', function (req, res) {
-    // TODO: Fetch user from database using
-    // req.body.id
-    // TODO: Decrypt one-time-use token using the user's
-    // current password hash from the database and combining it
-    // with the user's created date to make a very unique secret key!
-    // For example,
-    // var secret = user.password + ‘-' + user.created.getTime();
-    var secret = 'dannguyennhattruong';
+  app.post('/resetpassword', driver.resetPwdResult);
 
-    var payload = jwt.sign(req.body.token, secret);
-    console.log(payload.id)
+  app.post('/passwordreset', driver.passwordReset);
 
-    // TODO: Gracefully handle decoding issues.
-    // TODO: Hash password from
-    // req.body.password
-    Driver.findByIdAndUpdate(payload.id , {password : req.body.password},{new :true},(err,doc)=> {
-      console.log(doc)
-    })
-    res.send('Your password has been successfully changed.');
-  });
-
-  app.post('/passwordreset', function (req, res) {
-    if (req.body.email !== undefined) {
-      var emailAddress = req.body.email;
-      console.log('email '+emailAddress)
-
-      // TODO: Using email, find user from your database.
-      Driver.find({ email: emailAddress }, (err, doc) => {
-        var payload = {
-          id: doc[0].id,        // User ID from database
-          email: emailAddress
-        };
-        console.log('payload ' +payload)
-
-        // TODO: Make this a one-time-use token by using the user's
-        // current password hash from the database, and combine it
-        // with the user's created date to make a very unique secret key!
-        // For example:
-        // var secret = user.password + ‘-' + user.created.getTime();
-        var secret = 'dannguyennhattruong';
-
-        var token = jwt.sign(payload, secret);
-        console.log(doc[0])
-
-        // TODO: Send email containing link to reset password.
-        // In our case, will just return a link to click.
-        res.send('<p>Are you '+doc[0].Fullname +'? </p><br/><a href="/resetpassword/' + payload.id + '/' + token + '">Reset password</a>');
-      })
-
-    } else {
-      res.send('Email address is missing.');
-    }
-  });
-
-  app.get('/resetpassword/:id/:token', function (req, res) {
-    // TODO: Fetch user from database using
-    // req.params.id
-    // TODO: Decrypt one-time-use token using the user's
-    // current password hash from the database and combine it
-    // with the user's created date to make a very unique secret key!
-    // For example,
-    // var secret = user.password + ‘-' + user.created.getTime();
-    var secret = 'dannguyennhattruong';
-    var payload = jwt.decode(req.params.token, secret);
-    console.log(payload, req.params.token)
-
-    // TODO: Gracefully handle decoding issues.
-    // Create form to reset password.
-    res.send('<form action="/resetpassword" method="POST">' +
-      '<input type="hidden" name="id" value="' + payload.id + '" />' +
-      '<input type="hidden" name="token" value="' + req.params.token + '" />' +
-      '<input type="password" name="password" value="" placeholder="Enter your new password..." />' +
-      '<input type="submit" value="Reset Password" />' +
-      '</form>');
-  });
+  app.get('/resetpassword/:id/:token', driver.passwordSubmit);
 
 
   //=====================================================================

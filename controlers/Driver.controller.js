@@ -3,6 +3,7 @@ const Trip = require("../models/Trip.model");
 
 const jwt = require('jsonwebtoken');
 const secret = 'dannguyennhattruong2019'
+const bcrypt = require("bcryptjs");
 // const jwt = require("jsonwebtoken");
 //-----------------------------------------------------------------------
 
@@ -19,10 +20,10 @@ exports.CreateDriver = async (req, res) => {
       req.body
     );
 
-    const token = await driver.generateAuthToken();
+    // const token = await driver.generateAuthToken();
     await driver.save();
-    console.log(token);
-    res.status(201).send({ driver, token });
+    // console.log(token);
+    res.status(201).send({ driver });
   } catch (error) {
     res.status(400).send(error);
   }
@@ -57,8 +58,8 @@ exports.UpdateDriver = (req, res) => {
 
   Driver.findByIdAndUpdate(
     req.params.id,
-    
-      req.body
+
+    req.body
     ,
     { new: true },
     (err, docc) => {
@@ -114,9 +115,10 @@ exports.getDriverLogin = async (req, res) => {
   //Login a registered user
   try {
     const { email, password } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
 
     const driver = await Driver.findByCredentials(email, password);
+    // console.log(driver)
     if (!driver) {
       return res
         .status(401)
@@ -124,7 +126,7 @@ exports.getDriverLogin = async (req, res) => {
     }
     const token = await driver.generateAuthToken();
     res.send({ driver, token });
-    console.log(driver);
+    // console.log(driver);
   } catch (error) {
     res.status(400).send(error);
   }
@@ -166,31 +168,114 @@ exports.getDriverLogined = (req, res) => {
   // const keys = Object.keys(driver)
 };
 
-exports.forgetPassword = (req, res) => {
-  const payload = { id: req.params.id };
-  const token = jwt.sign(payload, secret);
-  // const decode = jwt.decode(token, secret)
-  // res.send('<a href="/api/drivers/account/resetpassword/' + payload.id + '/' + token + '">Reset password</a>');
-  res.send({ payload, token })
-  console.log({ payload, token })
-  // console.log(decode)
+exports.driverLogout = async (req, res) => {
+  try {
+    req.driver.tokens = req.driver.tokens.filter(token => {
+      return token.token != req.token;
+    });
+    await req.driver.save();
+    res.send(req.driver);
+  } catch (error) {
+    res.status(500).send(error);
+  }
 }
 
-exports.resetPassword = (req, res) => {
-  const id = req.params.id;
-  Driver.findByIdAndUpdate(
-    id,
-    {
-      School:req.body.password
-    },
-    { new: true },
-    (err, docc) => {
-      if (!err) res.json(docc);
-      else res.send(err);
-    }
-  );
-  Driver.findById(id,(err,doc) => {
-    if(!err) res.send(doc)
-    else res.send(err)
+exports.logoutAllDrivers = async (req, res) => {
+  try {
+    req.driver.tokens.splice(0, req.driver.tokens.length);
+    await req.driver.save();
+    res.send(req.driver);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+
+}
+
+exports.forgotPassword = (req, res) => {
+  res.send('<form action="/passwordreset" method="POST">' +
+    '<input type="email" name="email" value="" placeholder="Enter your email address..." />' +
+    '<input type="submit" value="Reset Password" />' +
+    '</form>');
+}
+
+
+exports.passwordReset = (req, res) => {
+  if (req.body.email !== undefined) {
+    var emailAddress = req.body.email;
+    // console.log('email '+emailAddress)
+
+    // TODO: Using email, find user from your database.
+    Driver.find({ email: emailAddress }, (err, doc) => {
+      var payload = {
+        id: doc[0].id,        // User ID from database
+        email: emailAddress
+      };
+      console.log('/passwordreset : method : Post : payload' + payload)
+
+      // TODO: Make this a one-time-use token by using the user's
+      // current password hash from the database, and combine it
+      // with the user's created date to make a very unique secret key!
+      // For example:
+      // var secret = user.password + ‘-' + user.created.getTime();
+      var secret = 'WinterIsComingGOT2019';
+
+      var token = jwt.sign(payload, secret);
+      console.log('/passwordreset : method : Post' + token)
+
+      // TODO: Send email containing link to reset password.
+      // In our case, will just return a link to click.
+      res.send('<p>Are you ' + doc[0].Fullname + '? </p><br/><a href="/resetpassword/' + payload.id + '/' + token + '">Reset password  </a>');
+    })
+
+  } else {
+    res.send('Email address is missing.');
+  }
+}
+
+exports.passwordSubmit = (req, res) => {
+  // TODO: Fetch user from database using
+  // req.params.id
+  // TODO: Decrypt one-time-use token using the user's
+  // current password hash from the database and combine it
+  // with the user's created date to make a very unique secret key!
+  // For example,
+  // var secret = user.password + ‘-' + user.created.getTime();
+  var secret = 'WinterIsComingGOT2019';
+  var payload = jwt.decode(req.params.token, secret);
+  console.log('/resetpassword/:id/:token method : get: ' + payload, req.params.token)
+
+  // TODO: Gracefully handle decoding issues.
+  // Create form to reset password.
+  res.send('<form action="/resetpassword" method="POST">' +
+    '<input type="hidden" name="id" value="' + payload.id + '" />' +
+    '<input type="hidden" name="token" value="' + req.params.token + '" />' +
+    '<input type="password" name="password" value="" placeholder="Enter your new password..." />' +
+    '<input type="submit" value="Reset Password" />' +
+    '</form>');
+}
+
+exports.resetPwdResult = async (req, res) => {
+  // TODO: Fetch user from database using
+  // req.body.id
+  // TODO: Decrypt one-time-use token using the user's
+  // current password hash from the database and combining it
+  // with the user's created date to make a very unique secret key!
+  // For example,
+  // var secret = user.password + ‘-' + user.created.getTime();
+  var secret = 'WinterIsComingGOT2019';
+  console.log(req.body.token)
+
+  var payload = jwt.decode(req.body.token, secret);
+  console.log(payload)
+
+  // TODO: Gracefully handle decoding issues.
+  // TODO: Hash password from
+  // req.body.password
+  const password = await bcrypt.hash(req.body.password, 8);
+
+  Driver.findByIdAndUpdate(payload.id, { password: password }, { new: true }, (err, doc) => {
+    console.log(doc);
+    res.send('Your password has been successfully changed. ' + doc);
   })
+
 }

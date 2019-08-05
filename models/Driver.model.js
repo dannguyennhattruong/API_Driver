@@ -37,7 +37,7 @@ const driverSchema = new Schema({
       }
     }
   ]
-});
+},{timestamps:true});
 //--------------------------------------------------------------------------------------
 
 driverSchema.pre("save", async function(next) {
@@ -69,7 +69,7 @@ driverSchema.statics.findByCredentials = async (email, password) => {
     throw new Error({ error: "Invalid login credentials" });
   }
   const isPasswordMatch = await bcrypt.compare(password, driver.password);
-  console.log(isPasswordMatch);
+  // console.log(isPasswordMatch);
   if (!isPasswordMatch) {
     // throw new Error({ error: 'Invalid login credentials' })
     return !driver;
