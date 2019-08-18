@@ -6,6 +6,7 @@ const app = express();
 // const router = express.Router()
 
 const route = require("./routes/Driver.route.js");
+const serviceRoute = require('./routes/microService');
 
 const mongoose = require("mongoose");
 // const auth = require("./middleware/auth");
@@ -31,6 +32,13 @@ mongoose
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000 !! :D");
+  setInterval(() => {
+    axios.get('http://localhost:5555/service/trip/driver/3000')
+    .then(result => {
+      console.log(result.data);
+    })
+    .catch(err => console.log(err));
+  }, 10 * 1000);
 });
 
 mongoose.set("useFindAndModify", false);
@@ -42,7 +50,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 route(app);
-
+serviceRoute(app);
 //-------------------------------------------------------------------------------//
 app.get("/drivers", (req, res) => {
   axios
