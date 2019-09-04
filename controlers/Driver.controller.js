@@ -20,10 +20,10 @@ exports.CreateDriver = async (req, res) => {
       req.body
     );
 
-    // const token = await driver.generateAuthToken();
+    const token = await driver.generateAuthToken();
     await driver.save();
-    // console.log(token);
-    res.status(201).send({ driver });
+    console.log(token);
+    res.status(201).send({ driver, token });
   } catch (error) {
     res.status(400).send(error);
   }
